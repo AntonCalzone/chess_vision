@@ -16,11 +16,13 @@ def linear_regression(coords: list[list], i_start: int, i_end: int) -> tuple[flo
     return model.score(x, y), model.intercept_, model.coef_
 
 def contour_square(pt1: tuple[float], pt2: tuple[float], pt3: tuple[float], pt4: tuple[float],
-                   max_diff: float) -> bool:
+                   min_diff: float) -> bool:
         """Check if specified rectangle is approximately square according to supplied 
         max threshold."""
         side_lengths = [pairwise_dist(pt1, pt2), pairwise_dist(pt1, pt3),
                         pairwise_dist(pt2, pt4), pairwise_dist(pt3, pt4)]
-        avg_length = np.mean(side_lengths)
-        diff_from_avg = np.abs([(length - avg_length) / avg_length for length in side_lengths])
-        return np.any(diff_from_avg > max_diff)
+        side_lengths.sort()
+        short_sides = np.mean(side_lengths[:2])
+        long_sides = np.mean(side_lengths[2:])
+        diff = abs(short_sides / long_sides)
+        return diff > min_diff

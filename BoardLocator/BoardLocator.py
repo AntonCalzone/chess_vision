@@ -20,10 +20,10 @@ class BoardLocator:
         # TODO: These should be specified in a parameters file instead, and accessed via 
         # a parameters class instance.
         self.hough_line_min_length = 700
-        self.square_side_threshold = 0.25
-        self.linear_reg_threshold = 0.25
         self.min_contour_area = 6000
         self.max_contour_area = 55000
+        self.min_square_ratio = 0.5
+        self.linear_reg_threshold = 0.25
 
     def find_squares(self, image: np.ndarray) -> list:
         """Given an image of a chess board, return the positions of the squares
@@ -72,7 +72,7 @@ class BoardLocator:
         square_centers = []
         squares_im = np.zeros_like(hough_lines_im)
 
-        for contour in board_contours:
+        for i, contour in enumerate(board_contours):
             if self.min_contour_area < cv2.contourArea(contour) < self.max_contour_area:
                 # Sinmplify contour
                 eps = 0.02 * cv2.arcLength(contour, True)
@@ -86,8 +86,8 @@ class BoardLocator:
                 pt4 = tuple(pts[2])
                 pt3 = tuple(pts[3])
 
-                # if not contour_square(pt1, pt2, pt3, pt4, self.square_side_threshold):
-                #     continue
+                if not contour_square(pt1, pt2, pt3, pt4, self.min_square_ratio):
+                    continue
 
                 x, y, w, h = cv2.boundingRect(contour)
                 center_x = (x + (x + w)) / 2
