@@ -13,7 +13,9 @@ class BoardLocator:
         # Intermediary images
         self.images = {
             'hough_lines': None,
-            'squares': None
+            'squares': None,
+            'numbered_squares': None,
+            'row_lines': None
         }
 
         # Parameters
@@ -23,7 +25,7 @@ class BoardLocator:
         self.min_contour_area = 6000
         self.max_contour_area = 55000
         self.min_square_ratio = 0.5
-        self.linear_reg_threshold = 0.25
+        self.linear_reg_threshold = 0.97
 
     def find_squares(self, image: np.ndarray) -> list:
         """Given an image of a chess board, return the positions of the squares
@@ -99,7 +101,7 @@ class BoardLocator:
                 cv2.line(squares_im, pt2, pt4, (255, 255, 0), 7)
                 cv2.line(squares_im, pt3, pt4, (255, 255, 0), 7)
 
-        self.images['squares_im'] = squares_im
+        self.images['squares'] = squares_im
 
         # Sort squares by center values
         sorted_coords = sorted(square_centers, key=lambda x: x[1], reverse=True)
@@ -118,6 +120,89 @@ class BoardLocator:
             group.sort(key=lambda x: x[0])
 
         sorted_coords = [coord for group in groups for coord in group]
+
+        # Number squares
+        numbered_squares = squares_im.copy()
+        square_num = 1
+        for coord in sorted_coords:
+            cv2.putText(img=numbered_squares, text=str(square_num),
+                        org=(int(coord[0])-30, int(coord[1])), fontFace=cv2.FONT_HERSHEY_DUPLEX,
+                        fontScale=1, color=(125, 246, 55), thickness=3)
+            square_num += 1
+        self.images['numbered_squares'] = numbered_squares
+
+
+
+        # Map square coords to horizontal lines for each row
+        row_lines = []
+        row_lines_im = squares_im.copy()
+        xs = np.array([square[0] for square in sorted_coords])
+        i_row_breaks = np.where(xs - np.array([*xs[1:], xs[-1]]) >= 0)[0] + 1
+        i_start = 0
+        for i_end in i_row_breaks:
+            _, intercept, coef = linear_regression(sorted_coords, i_start, i_end)
+            row_lines.append((intercept, coef))
+            p1 = (1, int(coef + intercept))
+            p2 = (1919, int(coef * 1919 + intercept))
+            cv2.line(row_lines_im, p1, p2, (125, 246, 55), 3)
+            i_start = i_end
+
+        coefs = [round(coef, 3) for _, coef in row_lines]
+        print(coefs)
+
+
+
+
+
+        # Map square coord to horizontal lines
+        # row_lines_im = squares_im.copy()
+        # row_lines = []
+        # i_start = 0
+        # i_end = 3
+        # while i_end < len(sorted_coords):
+        #     r_sq, intercept, coef = linear_regression(sorted_coords, i_start, i_end)
+
+        #     # Line found last iteration
+        #     if (r_sq < self.linear_reg_threshold) and ((i_end - i_start) > 3) and (abs(coef[0]) < 0.1):
+        #         _, intercept, coef = linear_regression(sorted_coords, i_start, i_end - 1)
+        #         p1 = (1, int(coef[0] + intercept))
+        #         p2 = (1919, int(coef[0] * 1919 + intercept))
+        #         cv2.line(row_lines_im, p2, p1, (255, 255, 255), 3)
+        #         row_lines.append((intercept, coef[0]))
+
+        #         # for i in range(i_start, i_end):
+        #         #     x, y, _, _, _, _ = sorted_coords[i]
+        #         #     perp_coef = -1 / coef[0]
+        #         #     # perp_intercept = x * (coef[0] + 1 / coef[0]) + intercept
+        #         #     perp_intercept = y + 1 / coef[0] * x
+        #         #     p1 = (1, int(perp_coef + intercept))
+        #         #     p2 = (1079, int(perp_coef * 1079 + perp_intercept))
+        #         #     cv2.line(row_lines_im, p1, p2, (255, 255, 255), 3)
+
+        #         i_start = i_end + 1
+        #         i_end = i_start + 3
+        #     # No line could be constructed
+        #     elif r_sq < self.linear_reg_threshold:
+        #         i_start += 1
+        #         i_end += 1
+        #     # Try construct line with one more point
+        #     else:
+        #         # Except if last point, then try to construct line now
+        #         if i_end + 1 == len(sorted_coords) and (i_end - i_start) > 3:
+        #             _, intercept, coef = linear_regression(sorted_coords, i_start, i_end)
+        #             p1 = (1, int(coef[0] + intercept))
+        #             p2 = (1919, int(coef[0] * 1919 + intercept))
+        #             cv2.line(row_lines_im, p2, p1, (255, 255, 255), 3)
+        #             row_lines.append((intercept, coef[0]))
+        #         i_end += 1
+
+        self.images['row_lines'] = row_lines_im
+
+        print(f"Found {len(row_lines)} lines")
+
+
+
+
 
         
 

@@ -13,7 +13,7 @@ def linear_regression(coords: list[list], i_start: int, i_end: int) -> tuple[flo
     x = np.array([coords[i][0] for i in range(i_start, i_end)]).reshape((-1, 1))
     y = np.array([coords[i][1] for i in range(i_start, i_end)])
     model = LinearRegression().fit(x, y)
-    return model.score(x, y), model.intercept_, model.coef_
+    return model.score(x, y), model.intercept_, model.coef_[0]
 
 def contour_square(pt1: tuple[float], pt2: tuple[float], pt3: tuple[float], pt4: tuple[float],
                    min_diff: float) -> bool:

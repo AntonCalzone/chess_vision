@@ -20,9 +20,12 @@ for im_path in img_paths:
         board_locator.find_squares(im)
 
         # cv2.imshow("Hough lines", board_locator.images['hough_lines'])
-        cv2.imshow("Squares", board_locator.images['squares_im'])
+        # cv2.imshow("Squares", board_locator.images['squares'])
+        # cv2.imshow("Squares", board_locator.images['numbered_squares'])
+        cv2.imshow("Squares", board_locator.images['row_lines'])
         key = cv2.waitKey(0)
         if key == ord('q'):
             break
-    except:
-        pass
+
+    except IndexError as e:
+        print(f"Error: {e}")
