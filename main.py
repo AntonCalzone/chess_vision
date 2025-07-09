@@ -21,8 +21,8 @@ for im_path in img_paths:
 
         # cv2.imshow("Hough lines", board_locator.images['hough_lines'])
         # cv2.imshow("Squares", board_locator.images['squares'])
-        # cv2.imshow("Squares", board_locator.images['numbered_squares'])
-        cv2.imshow("Squares", board_locator.images['row_lines'])
+        cv2.imshow("Squares", board_locator.images['numbered_squares'])
+        # cv2.imshow("Squares", board_locator.images['row_lines'])
         key = cv2.waitKey(0)
         if key == ord('q'):
             break
